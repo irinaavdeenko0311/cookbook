@@ -2,12 +2,13 @@ from random import choice, randint
 from typing import Dict, List
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework.generics import ListAPIView, QuerySet, RetrieveAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView, QuerySet, RetrieveAPIView
+from rest_framework.response import Response
 
 from .models import Category, CountIngredients, Ingredient, Recipe
-from .serializers import (CategorySerializer, IngredientShortSerializer,
-                          MenuDaySerializer, RecipeFullSerializer,
-                          RecipeShortSerializer)
+from .serializers import (CategorySerializer, IngredientAllSerializer,
+                          IngredientShortSerializer, MenuDaySerializer,
+                          RecipeFullSerializer, RecipeShortSerializer)
 
 
 class RandomRecipeView(RetrieveAPIView):
@@ -90,14 +91,19 @@ class RecipesCategoriesSelectView(ListAPIView):
 
 
 @extend_schema(parameters=[OpenApiParameter(name="startswith", default="а",)])
-class IngredientsView(ListAPIView):
-    """Получение ингредиентов по первой букве."""
+class IngredientsView(RetrieveAPIView):
+    """Получение всех ингредиентов по первой букве."""
 
-    serializer_class = IngredientShortSerializer
+    serializer_class = IngredientAllSerializer
 
-    def get_queryset(self) -> List[Ingredient]:
-        startswith_ingredient = self.request.query_params.get("startswith")
-        return Ingredient.objects.filter(name__startswith=startswith_ingredient).order_by("name")
+    def get_object(self):
+        ingredients_symbol = {symbol: list() for symbol in "абвгдежзийклмнопрстуфхцчшщэюя"}
+        for ingredient in self.get_queryset():
+            ingredients_symbol[ingredient.name[0]].append(ingredient)
+        return ingredients_symbol
+
+    def get_queryset(self):
+        return Ingredient.objects.all().order_by("name")
 
 
 @extend_schema(parameters=[OpenApiParameter(name="ingredients", default="1,2,3",)])

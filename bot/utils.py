@@ -79,8 +79,8 @@ def get_keyboard_startswith_ingredients() -> InlineKeyboardMarkup:
     buttons = [
         InlineKeyboardButton(
             text=symbol + "...",
-            callback_data=f"search_by_ingredients {symbol}"
+            callback_data=f"sbi {symbol}"
         )
-        for symbol in "абвгдежзиклмнопрстуфхцчшщэюя"
+        for symbol in "абвгдежзийклмнопрстуфхцчшщэюя"
     ]
     return get_inline_keyboard_row(buttons=buttons, row_count=4)

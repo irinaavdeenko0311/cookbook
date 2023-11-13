@@ -7,9 +7,9 @@
 
 
 2. Запуск Django-приложения осуществляется командой:
-    ```
+    ``` 
     docker-compose up
-    ```
+   ```
 
 
 3. После запуска приложения доступна Swagger-документация: url /api/docs
@@ -18,8 +18,36 @@
 4. Добавлять новые записи в модели можно через админку. Также реализовано добавление данных через импорт csv-файла (примеры файлов: categories.csv, ingredients.csv, recipes.csv).
 
 
-5. Для запуска бота необходимо набрать команды:
+5. Для создания профиля администратора зайдите в контейнер:
     ```
     docker exec -it my_cookbook /bin/sh
+    ```
+   и:
+   - либо наберите команду:
+    ```
+    python manage.py createsuperuser
+    ```
+   - либо создайте пользователя из данных, указанных в .env-файле, команда:
+    ```
+    python manage.py create_superuser
+    ```
+
+6. Для заполнения БД имеющимися данными (файл recipes.json) зайдите в контейнер:
+    ```
+    docker exec -it my_cookbook /bin/sh
+    ```
+   и выполните команды:
+    ```
+    python manage.py loaddata api/data/recipes.json
+    python manage.py add_images
+    ```
+
+
+5. Для запуска telegram-бота зайдите в контейнер:
+    ```
+    docker exec -it my_cookbook /bin/sh
+    ```
+   и наберите команду:
+    ```
     cd ../bot && python handlers.py
     ```

@@ -1,4 +1,6 @@
-from rest_framework.serializers import ModelSerializer, Serializer
+from typing import List
+
+from rest_framework.serializers import ModelSerializer, Serializer, ListField
 
 from .models import Category, CountIngredients, Ingredient, Recipe
 
@@ -17,6 +19,20 @@ class IngredientShortSerializer(ModelSerializer):
     class Meta:
         model = Ingredient
         fields = "id", "name"
+
+
+class IngredientAllSerializer(Serializer):
+    """
+    Сериализатор для представления всех ингредиентов модели Ingredient.
+
+    По первым буквам.
+    """
+
+    def get_fields(self):
+        return {
+            symbol: ListField(child=IngredientShortSerializer())
+            for symbol in "абвгдежзийклмнопрстуфхцчшщэюя"
+        }
 
 
 class CountIngredientsSerializer(ModelSerializer):

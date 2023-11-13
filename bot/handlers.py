@@ -27,6 +27,7 @@ bot.set_my_commands([
 
 
 categories = json.loads(requests.get(f"{URL}api/categories").text)
+ingredients = json.loads(requests.get(f"{URL}api/ingredients").text)
 user_categories = dict()
 user_ingredients = dict()
 
@@ -38,6 +39,7 @@ user_ingredients = dict()
 def start(message: Message) -> None:
     """Обработчик команды /start."""
 
+    clear_all(message.chat.id)
     keyboard = utils.get_main_menu()
     bot.send_message(message.chat.id, "Привет!")
     bot.send_message(message.chat.id, "Что будем искать?", reply_markup=keyboard)
@@ -47,6 +49,7 @@ def start(message: Message) -> None:
 def random(message: Message) -> None:
     """Обработчик команды /random."""
 
+    clear_all(message.chat.id)
     send_random_recipe(message)
 
 
@@ -54,6 +57,7 @@ def random(message: Message) -> None:
 def menu_day(message: Message) -> None:
     """Обработчик команды /menu_day."""
 
+    clear_all(message.chat.id)
     send_menu_day(message)
 
 
@@ -61,6 +65,7 @@ def menu_day(message: Message) -> None:
 def search_by_categories(message: Message) -> None:
     """Обработчик команды /search_by_categories."""
 
+    clear_all(message.chat.id)
     send_categories(message)
 
 
@@ -68,6 +73,7 @@ def search_by_categories(message: Message) -> None:
 def search_by_ingredients(message: Message) -> None:
     """Обработчик команды /search_by_ingredients."""
 
+    clear_all(message.chat.id)
     send_ingredients(message)
 
 
@@ -78,6 +84,7 @@ def search_by_ingredients(message: Message) -> None:
 def callback_random_recipe(callback: CallbackQuery) -> None:
     """Функция для обработки запроса при нажатии кнопки главного меню 'Случайный рецепт'."""
 
+    clear_all(callback.message.chat.id)
     send_random_recipe(callback.message)
 
 
@@ -85,6 +92,7 @@ def callback_random_recipe(callback: CallbackQuery) -> None:
 def callback_menu_day(callback: CallbackQuery) -> None:
     """Функция для обработки запроса при нажатии кнопки главного меню 'Меню на день'."""
 
+    clear_all(callback.message.chat.id)
     send_menu_day(callback.message)
 
 
@@ -92,6 +100,7 @@ def callback_menu_day(callback: CallbackQuery) -> None:
 def callback_search_by_category(callback: CallbackQuery) -> None:
     """Функция для обработки запроса при нажатии кнопки главного меню 'Поиск по категориям'."""
 
+    clear_all(callback.message.chat.id)
     send_categories(callback.message)
 
 
@@ -143,6 +152,7 @@ def callback_send_categories_aside_select(callback: CallbackQuery) -> None:
 def callback_search_by_ingredients(callback: CallbackQuery) -> None:
     """Функция для обработки запроса при нажатии кнопки главного меню 'Поиск по ингредиентам'."""
 
+    clear_all(callback.message.chat.id)
     send_ingredients(callback.message)
 
 
@@ -153,7 +163,7 @@ def callback_search_by_ingredients_add(callback: CallbackQuery) -> None:
     send_ingredients(callback.message, add=True)
 
 
-@bot.callback_query_handler(lambda callback: callback.data.startswith("search_by_ingredients"))
+@bot.callback_query_handler(lambda callback: callback.data.startswith("sbi"))
 def callback_selected_startswith_symbol_for_ingredients(callback: CallbackQuery) -> None:
     """Функция для обработки запроса при выборе начала названия ингредиента."""
 
@@ -170,10 +180,9 @@ def callback_selected_startswith_symbol_for_ingredients(callback: CallbackQuery)
             user_ingredients[user_id].pop(ingredient_id)
 
     startswith_ingredient = callback_data[1][0]
-    response = requests.get(f"{URL}api/ingredients", params=f"startswith={startswith_ingredient}")
-    ingredients = json.loads(response.text)
-    keyboard = get_keyboard_ingredients(ingredients, user_id)
-
+    global ingredients
+    symbol_ingredients = ingredients.get(startswith_ingredient)
+    keyboard = get_keyboard_ingredients(symbol_ingredients, user_id)
     select_ingredients = ", ".join(user_ingredients[user_id].values())
     text_message = f"Выбранные ингредиенты: {select_ingredients}"
 
@@ -412,7 +421,7 @@ def get_keyboard_ingredients(ingredients_data: json, user_id: int) -> InlineKeyb
         else:
             text = "🟩 " + ingredient.get("name")
         buttons.append(InlineKeyboardButton(
-            text=text, callback_data=f"search_by_ingredients {text[2:]} {ingredient_id}")
+            text=text, callback_data=f"sbi {text[2:]} {ingredient_id}")
         )
     keyboard = utils.get_inline_keyboard_row(buttons=buttons, row_count=2)
     if user_ingredients[user_id]:
@@ -420,6 +429,17 @@ def get_keyboard_ingredients(ingredients_data: json, user_id: int) -> InlineKeyb
             text="Найти рецепты", callback_data="send_ingredients"
         ))
     return keyboard
+
+
+def clear_all(user_id: int) -> None:
+    """Функция для очищения данных пользователя о категориях и ингредиентах."""
+
+    global user_categories
+    if user_categories.get(user_id):
+        user_categories[user_id].clear()
+    global user_ingredients
+    if user_ingredients.get(user_id):
+        user_ingredients[user_id].clear()
 
 
 if __name__ == "__main__":
